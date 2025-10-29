@@ -3,7 +3,8 @@
 
 import React, { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import AuthLayout from "../components/AuthLayout";
+import AuthLayout from "../../../components/AuthLayout";
+import Link from "next/link";
 
 
 const Signup = () => {
@@ -29,7 +30,7 @@ const Signup = () => {
         if (error) {
             setError(error.message);
         } else {
-            setSuccess("Signup successful! Check your email for confirmation.");
+            setSuccess("Signup successful!");
         }
     };
 
@@ -73,6 +74,8 @@ const Signup = () => {
                         {error && <p className="text-red-500 text-center">{error}</p>}
                         {success && <p className="text-green-500 text-center">{success}</p>}
                     </form>
+                    <p className="mt-4">Already have an account? <Link className="text-blue-500" href={'/auth/login'}>Log In</Link></p>
+
                 </div>
             </div>
         </AuthLayout>

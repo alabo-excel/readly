@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import AuthLayout from "../components/AuthLayout";
+import AuthLayout from "../../../components/AuthLayout";
 
 const ResetPassword = () => {
     const [password, setPassword] = useState("");

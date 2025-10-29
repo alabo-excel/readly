@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { readingQuotes } from "../reading-quotes";
+import { readingQuotes } from "../app/auth/reading-quotes";
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     const [quote] = useState(() => {

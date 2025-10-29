@@ -2,7 +2,8 @@
 "use client";
 import React, { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import AuthLayout from "../components/AuthLayout";
+import AuthLayout from "../../../components/AuthLayout";
+import Link from "next/link";
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -60,6 +61,10 @@ const Login = () => {
                         {error && <p className="text-red-500 text-center">{error}</p>}
                         {success && <p className="text-green-500 text-center">{success}</p>}
                     </form>
+                    <div className="md:flex gap-4 justify-between">
+                        <p className="mt-4">Don't have an account? <Link className="text-blue-500" href={'/auth/signup'}>Sign Up</Link></p>
+                        <p className="mt-4"><Link href={'/auth/forgot-password'}>Forgot your password? </Link></p>
+                    </div>
                 </div>
             </div>
         </AuthLayout>
