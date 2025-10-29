@@ -30,9 +30,26 @@ export default function BookPage() {
                 const textRes = await axios.get(proxyUrl);
                 // Remove Gutenberg boilerplate (header/footer)
                 let text = textRes.data;
-                // text = text.replace(/^[\s\S]*?(?=CHAPTER|THE END|INTRODUCTION)/i, "");
-                // text = text.replace(/THE END.*$/i, "");
 
+                // Try to extract between Gutenberg markers first
+                const startMarker = /\*\*\* START OF (THE|THIS) PROJECT GUTENBERG EBOOK[\s\S]*?\*\*\*/i;
+                const endMarker = /\*\*\* END OF (THE|THIS) PROJECT GUTENBERG EBOOK[\s\S]*?\*\*\*/i;
+
+                const startIndex = text.search(startMarker);
+                const endIndex = text.search(endMarker);
+
+                if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+                    text = text.slice(startIndex, endIndex)
+                        .replace(startMarker, "")
+                        .replace(endMarker, "");
+                } else {
+                    // fallback to your existing logic
+                    text = text.replace(/^[\s\S]*?(?=CHAPTER|INTRODUCTION)/i, "");
+                    text = text.replace(/THE END.*$/i, "");
+                }
+
+                // Optional cleanup
+                text = text.replace(/\r?\n{2,}/g, "\n\n").trim();
 
                 setContent(text);
             } catch (err) {
