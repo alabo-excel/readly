@@ -1,10 +1,13 @@
+import DashboardLayout from '@/components/DashboardLayout';
 import React from 'react';
 
 const profile = () => {
     return (
-        <div>
-            
-        </div>
+        <DashboardLayout>
+            <div>
+                hello
+            </div>
+        </DashboardLayout>
     );
 };
 

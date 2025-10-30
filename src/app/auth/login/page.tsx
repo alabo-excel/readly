@@ -15,10 +15,17 @@ const Login = () => {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    useEffect(() => {
-        // Check if user is already logged in
-        handleAuthSession();
-    }, []);
+    // useEffect(() => {
+    //     const checkAuth = async () => {
+    //         const { data: { session } } = await supabase.auth.getSession();
+    //         console.log('Current session:', session);
+    //         if (session?.user?.id) {
+    //             console.log('Redirecting to discover...');
+    //             window.location.href = '/discover';
+    //         }
+    //     };
+    //     checkAuth();
+    // }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,13 +41,15 @@ const Login = () => {
 
             if (error) {
                 setError(error.message);
-            } else {
+            } else if (data?.session?.user) {
                 setSuccess("Login successful!");
-                // Store the session
-                if (data.session) {
-                    // Redirect to books page after successful login
-                    router.push('/discover');
-                }
+                console.log('Login successful, redirecting...');
+                // Set a small delay to ensure the session is properly set
+                setTimeout(() => {
+                    window.location.href = '/discover';
+                }, 500);
+            } else {
+                setError("No session created. Please try again.");
             }
         } catch (err) {
             setError('An unexpected error occurred. Please try again.');

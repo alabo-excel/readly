@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
+import DashboardLayout from "@/components/DashboardLayout";
 
 interface Author {
     name: string;
@@ -17,29 +18,7 @@ interface Book {
     };
 }
 
-const categories = [
-    "Adventure stories",
-    "Art & Photography",
-    "Biographies",
-    "Children & Young Adult Reading",
-    "Classics of Literature",
-    "Computers & Technology",
-    "Drama",
-    "Fiction",
-    "Health/Fitness",
-    "History",
-    "Humor",
-    "Law",
-    "Literature",
-    "Music",
-    "Nature",
-    "Poetry",
-    "Reference",
-    "Religion/Spirituality",
-    "Science",
-    "Short Stories",
-    "Travel Writing",
-];
+
 
 export default function Books() {
     const [books, setBooks] = useState<Book[]>([]);
@@ -77,6 +56,7 @@ export default function Books() {
     }, [query]);
 
     return (
+        <DashboardLayout> 
         <div className="p-8">
             <h1 className="text-3xl font-semibold mb-6">📚 Public Domain Books (Project Gutenberg)</h1>
 
@@ -100,7 +80,7 @@ export default function Books() {
             {loading ? (
                 <div className="p-8 text-lg text-gray-600">Loading books...</div>
             ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {books.length > 0 ? (
                         books.map((book) => (
                             <Link key={book.id} href={`/books/${book.id}`}>
@@ -137,6 +117,7 @@ export default function Books() {
                     )}
                 </div>
             )}
-        </div>
+            </div>
+            </DashboardLayout>
     );
 }
