@@ -28,6 +28,25 @@ const Signup = () => {
         setError("");
         setSuccess("");
 
+        // Basic validation
+        if (!username.trim()) {
+            setError("Username is required");
+            setLoading(false);
+            return;
+        }
+
+        if (!email.trim()) {
+            setError("Email is required");
+            setLoading(false);
+            return;
+        }
+
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
+            setLoading(false);
+            return;
+        }
+
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
