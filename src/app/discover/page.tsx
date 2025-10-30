@@ -4,6 +4,8 @@ import axios from "axios";
 import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
 
 interface Author {
     name: string;
@@ -89,25 +91,58 @@ export default function Books() {
         }
     };
 
+    interface CategoryBooks {
+        category: string;
+        books: Book[];
+        loading: boolean;
+    }
+
+    const [categoryBooks, setCategoryBooks] = useState<CategoryBooks[]>([]);
+
     const loadRecommendedBooks = async (categories: string[]) => {
         try {
             setLoading(true);
-            const categoryQuery = categories.join('|');
-            const url = query
-                ? `https://gutendex.com/books?search=${encodeURIComponent(query)}&languages=en&mime_type=text%2Fplain`
-                : `https://gutendex.com/books?topic=${encodeURIComponent(categoryQuery)}&languages=en&mime_type=text%2Fplain&limit=20`;
+            // Initialize all categories with loading state
+            setCategoryBooks(categories.map(category => ({
+                category,
+                books: [],
+                loading: true
+            })));
 
-            const res = await axios.get(url);
-            const gutenbergBooks = res.data.results || [];
+            // Fetch books for each category in parallel
+            const bookPromises = categories.map(async (category) => {
+                try {
+                    const url = query
+                        ? `https://gutendex.com/books?search=${encodeURIComponent(query)}&languages=en&mime_type=text%2Fplain`
+                        : `https://gutendex.com/books?topic=${encodeURIComponent(category)}&languages=en&mime_type=text%2Fplain&limit=8`;
 
-            const formattedBooks = gutenbergBooks.map((item: any) => ({
-                id: item.id.toString(),
-                title: item.title,
-                authors: item.authors || ["Unknown"],
-                formats: item.formats,
-            }));
+                    const res = await axios.get(url);
+                    const gutenbergBooks = res.data.results || [];
 
-            setBooks(formattedBooks);
+                    const formattedBooks = gutenbergBooks.map((item: any) => ({
+                        id: item.id.toString(),
+                        title: item.title,
+                        authors: item.authors || ["Unknown"],
+                        formats: item.formats,
+                    }));
+
+                    return {
+                        category,
+                        books: formattedBooks,
+                        loading: false
+                    };
+                } catch (error) {
+                    console.error(`Error fetching books for ${category}:`, error);
+                    return {
+                        category,
+                        books: [],
+                        loading: false
+                    };
+                }
+            });
+
+            const results = await Promise.all(bookPromises);
+            setCategoryBooks(results);
         } catch (error) {
             console.error("Error fetching books:", error);
         } finally {
@@ -149,8 +184,8 @@ export default function Books() {
                                 onClick={handleSavePreferences}
                                 disabled={selectedCategories.length === 0 || saving}
                                 className={`w-full py-3 rounded-lg transition-colors flex items-center justify-center ${selectedCategories.length > 0 && !saving
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
                                 {saving ? (
@@ -166,7 +201,7 @@ export default function Books() {
                     </div>
                 )}
 
-                <h1 className="text-3xl font-semibold mb-6">📚 Discover Books</h1>
+                {/* <h1 className="text-3xl font-semibold mb-6">📚 Discover Books</h1> */}
 
                 {/* 🔍 Search Bar */}
                 <div className="flex gap-2 mb-6">
@@ -188,41 +223,69 @@ export default function Books() {
                 {loading ? (
                     <div className="p-8 text-lg text-gray-600">Loading books...</div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {books.length > 0 ? (
-                            books.map((book) => (
-                                <Link key={book.id} href={`/books/${book.id}`}>
-                                    <div className="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden cursor-pointer">
-                                        <img
-                                            src={
-                                                book.formats["image/jpeg"]
-                                                    ? book.formats["image/jpeg"]
-                                                    : "https://via.placeholder.com/150x220?text=No+Cover"
-                                            }
-                                            alt={book.title}
-                                            className="w-full h-56 object-cover"
-                                            onError={(e) => {
-                                                e.currentTarget.src = "https://via.placeholder.com/150x220?text=No+Cover";
-                                            }}
-                                        />
-                                        <div className="p-4">
-                                            <h2 className="font-medium text-black text-lg line-clamp-2">{book.title}</h2>
-                                            {book.authors?.[0] && (
-                                                <p className="text-gray-600 text-sm mt-1">
-                                                    {typeof book.authors[0] === "string"
-                                                        ? book.authors[0]
-                                                        : book.authors[0].name}
-                                                </p>
-                                            )}
-                                        </div>
+                    <div className="space-y-12">
+                        {categoryBooks.map(({ category, books, loading }) => (
+                            <div key={category} className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-2xl font-semibold">{category}</h2>
+                                    <Link href={`/discover/categories/${encodeURIComponent(category)}`} className="text-blue-600 hover:text-blue-800">
+                                        See all
+                                    </Link>
+                                </div>
+                                {loading ? (
+                                    <div className="flex items-center justify-center h-64">
+                                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                                     </div>
-                                </Link>
-                            ))
-                        ) : (
-                            <div className="col-span-full text-center text-gray-600">
-                                No books found. Try a different search.
+                                ) : books.length > 0 ? (
+                                    <div className="">
+                                        <Swiper
+                                            spaceBetween={24}
+                                            breakpoints={{
+                                                640: { slidesPerView: 1.5 },
+                                                768: { slidesPerView: 2.5 },
+                                                1024: { slidesPerView: 3.5 }
+                                            }}
+                                            className="!-mx-4 !px-4"
+                                        >
+                                            {books.map((book) => (
+                                                <SwiperSlide key={book.id}>
+                                                    <Link href={`/discover/${book.id}`}>
+                                                        <div className="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden cursor-pointer h-full">
+                                                            <img
+                                                                src={
+                                                                    book.formats["image/jpeg"]
+                                                                        ? book.formats["image/jpeg"]
+                                                                        : "https://via.placeholder.com/150x220?text=No+Cover"
+                                                                }
+                                                                alt={book.title}
+                                                                className="w-full h-80 object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.src = "https://via.placeholder.com/150x220?text=No+Cover";
+                                                                }}
+                                                            />
+                                                            <div className="p-4">
+                                                                <h2 className="font-medium text-black text-lg line-clamp-2">{book.title}</h2>
+                                                                {/* {book.authors?.[0] && (
+                                                                    <p className="text-gray-600 text-sm mt-1">
+                                                                        {typeof book.authors[0] === "string"
+                                                                            ? book.authors[0]
+                                                                            : book.authors[0].name}
+                                                                    </p>
+                                                                )} */}
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                </SwiperSlide>
+                                            ))}
+                                        </Swiper>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-gray-600 py-8">
+                                        No books found for {category}.
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        ))}
                     </div>
                 )}
             </div>

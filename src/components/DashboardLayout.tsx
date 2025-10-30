@@ -80,7 +80,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <div className="min-h-screen flex">
             {/* Sidebar */}
             {/* Sidebar */}
-            <div className="fixed top-0 left-0 h-screen w-74 bg-black">
+            <div className="fixed top-0 left-0 h-screen w-[20%] bg-black">
                 <div className="h-full flex flex-col">
                     {/* Logo */}
                     <div className="p-4 border-b border-gray-200 dark:border-gray-800">
@@ -125,7 +125,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
 
             {/* Main content */}
-            <div className="ml-74 flex-1 bg-gray-50 dark:bg-gray-950 min-h-screen">
+            <div className="max-w-[80%] ml-auto flex-1 bg-gray-50 dark:bg-gray-950 min-h-screen">
                 {children}
             </div>
         </div>
