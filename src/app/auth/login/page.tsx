@@ -1,31 +1,51 @@
 
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import AuthLayout from "../../../components/AuthLayout";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { handleAuthSession } from "@/lib/utils/auth";
 
 const Login = () => {
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    useEffect(() => {
+        // Check if user is already logged in
+        handleAuthSession();
+    }, []);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
         setSuccess("");
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
-        setLoading(false);
-        if (error) {
-            setError(error.message);
-        } else {
-            setSuccess("Login successful!");
+
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                setError(error.message);
+            } else {
+                setSuccess("Login successful!");
+                // Store the session
+                if (data.session) {
+                    // Redirect to books page after successful login
+                    router.push('/discover');
+                }
+            }
+        } catch (err) {
+            setError('An unexpected error occurred. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 

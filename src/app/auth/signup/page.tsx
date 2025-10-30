@@ -1,36 +1,56 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import AuthLayout from "../../../components/AuthLayout";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { handleAuthSession } from "@/lib/utils/auth";
 
 
 const Signup = () => {
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    useEffect(() => {
+        // Check if user is already logged in
+        handleAuthSession();
+    }, []);
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
         setSuccess("");
-        const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: { username },
-            },
-        });
-        setLoading(false);
-        if (error) {
-            setError(error.message);
-        } else {
-            setSuccess("Signup successful!");
+
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: { username },
+                    emailRedirectTo: `${window.location.origin}/auth/login`
+                },
+            });
+
+            if (error) {
+                setError(error.message);
+            } else {
+                setSuccess("Signup successful! Please check your email for confirmation.");
+                // If email confirmation is not required, handle immediate login
+                if (data.session) {
+                    router.push('/discover');
+                }
+            }
+        } catch (err) {
+            setError('An unexpected error occurred. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
