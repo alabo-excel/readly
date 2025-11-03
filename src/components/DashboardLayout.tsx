@@ -35,6 +35,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         window.location.href = '/auth/login';
     };
 
+    const isPathActive = (path: string) => {
+        // Exact match or starts with the path (for sub-routes)
+        return pathname === path || pathname.startsWith(path + '/');
+    };
+
     const navItems = [
         {
             name: 'Discover',
@@ -54,15 +59,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 </svg>
             ),
         },
-        {
-            name: 'Profile',
-            path: '/profile',
-            icon: (
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-            ),
-        },
+        // {
+        //     name: 'Profile',
+        //     path: '/profile',
+        //     icon: (
+        //         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        //             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        //         </svg>
+        //     ),
+        // },
     ];
 
     if (isLoading) {
@@ -77,10 +82,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
 
     return (
-        <div className="min-h-screen flex">
-            {/* Sidebar */}
-            {/* Sidebar */}
-            <div className="fixed top-0 left-0 h-screen w-[20%] bg-black">
+        <div className="min-h-screen flex flex-col md:flex-row">
+            {/* Desktop Sidebar */}
+            <div className="hidden md:fixed md:top-0 md:left-0 md:h-screen md:w-[20%] md:bg-black md:block">
                 <div className="h-full flex flex-col">
                     {/* Logo */}
                     <div className="p-4 border-b border-gray-200 dark:border-gray-800">
@@ -98,7 +102,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                             <Link
                                 key={item.path}
                                 href={item.path}
-                                className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-colors ${pathname === item.path
+                                className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg transition-colors ${isPathActive(item.path)
                                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                                     }`}
@@ -125,8 +129,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
 
             {/* Main content */}
-            <div className="max-w-[80%] ml-auto flex-1 bg-gray-50 dark:bg-gray-950 min-h-screen">
+            <div className="md:max-w-[80%] md:ml-auto flex-1 bg-gray-50 dark:bg-gray-950 min-h-screen pb-20 md:pb-0">
                 {children}
+            </div>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-gray-200 dark:border-gray-800">
+                <nav className="flex items-center justify-around p-2">
+                    {navItems.map((item) => (
+                        <Link
+                            key={item.path}
+                            href={item.path}
+                            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${isPathActive(item.path)
+                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                }`}
+                        >
+                            {item.icon}
+                            <span className="text-xs mt-1">{item.name}</span>
+                        </Link>
+                    ))}
+                    <button
+                        onClick={handleLogout}
+                        className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span className="text-xs mt-1">Logout</span>
+                    </button>
+                </nav>
             </div>
         </div>
     );

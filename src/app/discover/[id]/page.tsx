@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import DashboardLayout from "@/components/DashboardLayout";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function BookPage() {
     const { id } = useParams();
@@ -10,6 +11,8 @@ export default function BookPage() {
     const [content, setContent] = useState<string>("Loading content...");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [addingToLibrary, setAddingToLibrary] = useState(false);
+    const [addedToLibrary, setAddedToLibrary] = useState(false);
 
     useEffect(() => {
         const fetchBook = async () => {
@@ -63,6 +66,53 @@ export default function BookPage() {
         fetchBook();
     }, [id]);
 
+    const addBookToLibrary = async () => {
+        try {
+            setAddingToLibrary(true);
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                setError("You must be logged in to add books to your library");
+                return;
+            }
+
+            // Store book in local storage
+            const bookData = {
+                book_id: id,
+                title: book.title,
+                author: book.authors?.[0]?.name || "Unknown",
+                cover_image: book.formats["image/jpeg"] || null,
+                gutenberg_url: book.formats["text/plain; charset=us-ascii"] || null,
+                added_at: new Date().toISOString()
+            };
+
+            // Get existing library from localStorage
+            const libraryKey = `library_${user.id}`;
+            const existingLibrary = localStorage.getItem(libraryKey);
+            const library = existingLibrary ? JSON.parse(existingLibrary) : [];
+
+            // Check if book already exists
+            const bookExists = library.some((b: any) => b.book_id === id);
+            if (bookExists) {
+                setError("This book is already in your library");
+                return;
+            }
+
+            // Add book to library
+            library.push(bookData);
+            localStorage.setItem(libraryKey, JSON.stringify(library));
+
+            setAddedToLibrary(true);
+            // Show success message for 2 seconds
+            setTimeout(() => setAddedToLibrary(false), 2000);
+        } catch (err) {
+            console.error("Error:", err);
+            setError("An error occurred while adding the book");
+        } finally {
+            setAddingToLibrary(false);
+        }
+    };
+
     if (loading)
         return <div className="p-8 text-gray-600 text-lg">Loading book...</div>;
 
@@ -97,7 +147,39 @@ export default function BookPage() {
                                 {book.subjects.join(", ")}
                             </p>
                         )}
+                        <button
+                            onClick={addBookToLibrary}
+                            disabled={addingToLibrary || addedToLibrary}
+                            className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 ${addedToLibrary
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400'
+                                }`}
+                        >
+                            {addingToLibrary ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Adding...
+                                </>
+                            ) : addedToLibrary ? (
+                                <>
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    Added to Library
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add to Library
+                                </>
+                            )}
+                        </button>
+                    </div>
 
+                    <div className="mt-6">
+                        <h2 className="text-2xl font-semibold mb-4">Summary</h2>
                         <div className="text-gray-800 whitespace-pre-wrap leading-relaxed">
                             {book.summaries
                                 ? book.summaries[0]
