@@ -231,6 +231,8 @@ export default function Books() {
                                     <Link href={`/discover/categories/${encodeURIComponent(category)}`} className="text-blue-600 hover:text-blue-800">
                                         See all
                                     </Link>
+
+                                    
                                 </div>
                                 {loading ? (
                                     <div className="flex items-center justify-center h-64">
@@ -250,7 +252,7 @@ export default function Books() {
                                             {books.map((book) => (
                                                 <SwiperSlide key={book.id}>
                                                     <Link href={`/discover/${book.id}`}>
-                                                        <div className="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden cursor-pointer h-full">
+                                                        <div className="bg-black rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden cursor-pointer h-full">
                                                             <img
                                                                 src={
                                                                     book.formats["image/jpeg"]
@@ -264,14 +266,14 @@ export default function Books() {
                                                                 }}
                                                             />
                                                             <div className="p-4">
-                                                                <h2 className="font-medium text-black text-lg line-clamp-2">{book.title}</h2>
-                                                                {/* {book.authors?.[0] && (
+                                                                <h2 className="font-medium text-white text-lg line-clamp-2">{book.title}</h2>
+                                                                {book.authors?.[0] && (
                                                                     <p className="text-gray-600 text-sm mt-1">
                                                                         {typeof book.authors[0] === "string"
                                                                             ? book.authors[0]
                                                                             : book.authors[0].name}
                                                                     </p>
-                                                                )} */}
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </Link>

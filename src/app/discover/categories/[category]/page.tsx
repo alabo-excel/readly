@@ -79,7 +79,7 @@ const CategoryPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {books.map((book) => (
                         <Link key={book.id} href={`/discover/${book.id}`}>
-                            <div className="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden cursor-pointer h-full">
+                            <div className="bg-black rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden cursor-pointer h-full">
                                 <img
                                     src={
                                         book.formats["image/jpeg"]
@@ -93,7 +93,7 @@ const CategoryPage = () => {
                                     }}
                                 />
                                 <div className="p-4">
-                                    <h2 className="font-medium text-black text-lg line-clamp-2">{book.title}</h2>
+                                    <h2 className="font-medium text-white text-lg line-clamp-2">{book.title}</h2>
                                     {book.authors?.[0] && (
                                         <p className="text-gray-600 text-sm mt-1">
                                             {typeof book.authors[0] === "string"
