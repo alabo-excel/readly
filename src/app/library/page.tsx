@@ -85,7 +85,12 @@ const Library = () => {
     if (loading) {
         return (
             <DashboardLayout>
-                <div className="p-8 text-lg text-gray-600">Loading your library...</div>
+                <div className="min-h-screen flex items-center justify-center">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading...</p>
+                    </div>
+                </div>
             </DashboardLayout>
         );
     }
@@ -107,7 +112,7 @@ const Library = () => {
                         <p className="text-gray-600 mb-6">Start adding books from the Discover section to build your library.</p>
                         <Link
                             href="/discover"
-                            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                            className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition"
                         >
                             Explore Books
                         </Link>
@@ -129,7 +134,7 @@ const Library = () => {
                                         />
                                         {/* Overlay on hover */}
                                         {/* <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
-                                            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+                                            <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
                                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m0 0h6m-6-6h6m0 0v6m0-6h6" />
                                                 </svg>
@@ -142,7 +147,7 @@ const Library = () => {
                                 {/* Book Info */}
                                 <div className="p-4 flex-1 flex flex-col">
                                     <Link href={`/library/${book.book_id}`}>
-                                        <h2 className="font-semibold text-gray-100 text-lg line-clamp-2 hover:text-blue-400 transition-colors cursor-pointer">
+                                        <h2 className="font-semibold text-gray-100 text-lg line-clamp-2 hover:text-blue-500 transition-colors cursor-pointer">
                                             {book.title}
                                         </h2>
                                     </Link>
@@ -164,7 +169,7 @@ const Library = () => {
                                 <div className="flex gap-2 p-4 border-t border-gray-700 bg-gray-900">
                                     <Link
                                         href={`/library/${book.book_id}`}
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+                                        className="flex-1 bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
                                     >
                                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

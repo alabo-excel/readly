@@ -114,7 +114,12 @@ export default function BookPage() {
     };
 
     if (loading)
-        return <div className="p-8 text-gray-600 text-lg">Loading book...</div>;
+        return <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading...</p>
+            </div>
+        </div>;
 
     if (error)
         return <div className="p-8 text-red-500">{error}</div>;
@@ -151,8 +156,8 @@ export default function BookPage() {
                             onClick={addBookToLibrary}
                             disabled={addingToLibrary || addedToLibrary}
                             className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 flex items-center gap-2 ${addedToLibrary
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-blue-500 text-white hover:bg-blue-700 disabled:bg-gray-400'
                                 }`}
                         >
                             {addingToLibrary ? (

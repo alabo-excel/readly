@@ -106,7 +106,7 @@ const Signup = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3 rounded-lg bg-blue-600 dark:bg-blue-500 text-white font-semibold text-base border-none transition-all duration-200 ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-lg cursor-pointer'}`}
+                            className={`w-full py-3 rounded-lg bg-blue-500 dark:bg-blue-500 text-white font-semibold text-base border-none transition-all duration-200 ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-700 dark:hover:bg-blue-500 hover:shadow-lg cursor-pointer'}`}
                         >
                             {loading ? "Signing up..." : "Sign Up"}
                         </button>

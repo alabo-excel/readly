@@ -161,7 +161,7 @@ const BookReader = () => {
             <DashboardLayout>
                 <div className="h-screen flex items-center justify-center">
                     <div className="text-center">
-                        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                         <p className="text-gray-600">Loading book...</p>
                     </div>
                 </div>
@@ -177,7 +177,7 @@ const BookReader = () => {
                         <p className="text-red-600 mb-4">{error}</p>
                         <button
                             onClick={() => router.push('/library')}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700"
                         >
                             Back to Library
                         </button>
@@ -210,7 +210,7 @@ const BookReader = () => {
                         <div className="mb-4">
                             <div className="w-full bg-gray-700 rounded-full h-2">
                                 <div
-                                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                                     style={{ width: `${readingProgress}%` }}
                                 ></div>
                             </div>
@@ -267,11 +267,11 @@ const BookReader = () => {
                         onClick={goToPreviousPage}
                         disabled={currentPage === 0}
                         className={`px-6 py-2 rounded-lg transition ${currentPage === 0
-                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                            : 'bg-blue-500 hover:bg-blue-700 text-white'
                             }`}
                     >
-                        ← 
+                        ←
                     </button>
 
                     {/* <button
@@ -285,8 +285,8 @@ const BookReader = () => {
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages - 1}
                         className={`px-6 py-2 rounded-lg transition ${currentPage === totalPages - 1
-                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                            : 'bg-blue-500 hover:bg-blue-700 text-white'
                             }`}
                     >
                         →

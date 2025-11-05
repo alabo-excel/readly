@@ -1,11 +1,6 @@
-import React from 'react';
+import { redirect } from 'next/navigation';
 
-const home = () => {
-  return (
-    <div>
-      Hello world
-    </div>
-  );
-};
-
-export default home;
+export default function Hage() {
+  redirect('/auth/login');
+  return null;
+}

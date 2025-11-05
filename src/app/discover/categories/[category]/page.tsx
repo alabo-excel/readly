@@ -31,10 +31,10 @@ const CategoryPage = () => {
             setLoading(true);
             const category = decodeURIComponent(params.category as string);
             const url = `https://gutendex.com/books?topic=${encodeURIComponent(category)}&languages=en&mime_type=text%2Fplain&page=${pageNum}`;
-            
+
             const res = await axios.get(url);
             const gutenbergBooks = res.data.results || [];
-            
+
             const formattedBooks = gutenbergBooks.map((item: any) => ({
                 id: item.id.toString(),
                 title: item.title,
@@ -68,9 +68,9 @@ const CategoryPage = () => {
                     <h1 className="text-3xl font-semibold">
                         {decodeURIComponent(params.category as string)}
                     </h1>
-                    <Link 
-                        href="/discover" 
-                        className="text-blue-600 hover:text-blue-800"
+                    <Link
+                        href="/discover"
+                        className="text-blue-500 hover:text-blue-800"
                     >
                         Back to Discover
                     </Link>
@@ -109,7 +109,7 @@ const CategoryPage = () => {
 
                 {loading && (
                     <div className="flex items-center justify-center h-32">
-                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 )}
 
@@ -117,7 +117,7 @@ const CategoryPage = () => {
                     <div className="mt-8 flex justify-center">
                         <button
                             onClick={() => fetchBooks(page + 1)}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition"
                         >
                             Load More Books
                         </button>

@@ -98,6 +98,11 @@ export default function Books() {
     }
 
     const [categoryBooks, setCategoryBooks] = useState<CategoryBooks[]>([]);
+    const [searchResults, setSearchResults] = useState<Book[]>([]);
+    const [hasSearched, setHasSearched] = useState(false);
+    const [searchPage, setSearchPage] = useState(1);
+    const [hasMoreResults, setHasMoreResults] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     const loadRecommendedBooks = async (categories: string[]) => {
         try {
@@ -155,7 +160,61 @@ export default function Books() {
         loadRecommendedBooks(selectedCategories);
     }, [query, selectedCategories]);
 
-    return (
+    const handleSearch = async (page: number = 1) => {
+        if (!search.trim()) {
+            setSearchResults([]);
+            setHasSearched(false);
+            return;
+        }
+
+        try {
+            if (page === 1) {
+                setLoading(true);
+            } else {
+                setLoadingMore(true);
+            }
+            setHasSearched(true);
+
+            const url = `https://gutendex.com/books?search=${encodeURIComponent(search.trim())}&languages=en&mime_type=text%2Fplain&page=${page}`;
+            const res = await axios.get(url);
+            const gutenbergBooks = res.data.results || [];
+
+            const formattedBooks = gutenbergBooks.map((item: any) => ({
+                id: item.id.toString(),
+                title: item.title,
+                authors: item.authors || ["Unknown"],
+                formats: item.formats,
+            }));
+
+            if (page === 1) {
+                setSearchResults(formattedBooks);
+                setSearchPage(1);
+            } else {
+                setSearchResults(prev => [...prev, ...formattedBooks]);
+                setSearchPage(page);
+            }
+
+            // Check if there are more results
+            setHasMoreResults(res.data.next !== null);
+        } catch (error) {
+            console.error("Error searching books:", error);
+            if (page === 1) {
+                setSearchResults([]);
+            }
+            setHasMoreResults(false);
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    const clearSearch = () => {
+        setSearch("");
+        setSearchResults([]);
+        setHasSearched(false);
+        setSearchPage(1);
+        setHasMoreResults(true);
+    }; return (
         <DashboardLayout>
             <div className="p-8">
                 {/* Category Selection Modal */}
@@ -172,7 +231,7 @@ export default function Books() {
                                         key={category}
                                         onClick={() => handleCategoryToggle(category)}
                                         className={`p-3 rounded-lg text-sm transition-colors ${selectedCategories.includes(category)
-                                            ? 'bg-blue-600 text-white'
+                                            ? 'bg-blue-500 text-white'
                                             : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                                             }`}
                                     >
@@ -184,7 +243,7 @@ export default function Books() {
                                 onClick={handleSavePreferences}
                                 disabled={selectedCategories.length === 0 || saving}
                                 className={`w-full py-3 rounded-lg transition-colors flex items-center justify-center ${selectedCategories.length > 0 && !saving
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    ? 'bg-blue-500 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
@@ -209,34 +268,116 @@ export default function Books() {
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch(1)}
                         placeholder="Search for books or authors..."
-                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
-                        onClick={() => setQuery(search.trim())}
-                        className="px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                        onClick={() => handleSearch(1)}
+                        className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
                     >
                         Search
                     </button>
+                    {hasSearched && (
+                        <button
+                            onClick={clearSearch}
+                            className="px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2"
+                            title="Clear search"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Clear
+                        </button>
+                    )}
                 </div>
 
                 {loading ? (
-                    <div className="p-8 text-lg text-gray-600">Loading books...</div>
+                    <div className="flex items-center justify-center h-64">
+                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : hasSearched ? (
+                    // Show search results
+                    <div>
+                        <h2 className="text-2xl font-semibold mb-6">Search Results</h2>
+                        {searchResults.length > 0 ? (
+                            <div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {searchResults.map((book) => (
+                                        <Link key={book.id} href={`/discover/${book.id}`}>
+                                            <div className="bg-black rounded-xl shadow hover:shadow-lg transition duration-300 overflow-hidden cursor-pointer h-full">
+                                                <img
+                                                    src={
+                                                        book.formats["image/jpeg"]
+                                                            ? book.formats["image/jpeg"]
+                                                            : "https://via.placeholder.com/150x220?text=No+Cover"
+                                                    }
+                                                    alt={book.title}
+                                                    className="w-full h-80 object-cover"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = "https://via.placeholder.com/150x220?text=No+Cover";
+                                                    }}
+                                                />
+                                                <div className="p-4">
+                                                    <h2 className="font-medium text-white text-lg line-clamp-2">{book.title}</h2>
+                                                    {book.authors?.[0] && (
+                                                        <p className="text-gray-600 text-sm mt-1">
+                                                            {typeof book.authors[0] === "string"
+                                                                ? book.authors[0]
+                                                                : book.authors[0].name}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                                {/* Load More Button for Search Results */}
+                                {hasMoreResults && (
+                                    <div className="flex justify-center mt-8">
+                                        <button
+                                            onClick={() => handleSearch(searchPage + 1)}
+                                            disabled={loadingMore}
+                                            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center gap-2"
+                                        >
+                                            {loadingMore ? (
+                                                <>
+                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    {/* Loading... */}
+                                                </>
+                                            ) : (
+                                                "Load More"
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="text-center text-gray-600 py-12">
+                                <p className="text-lg">No books found matching your search.</p>
+                                <button
+                                    onClick={clearSearch}
+                                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                                >
+                                    Clear Search
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 ) : (
+                    // Show category books
                     <div className="space-y-12">
                         {categoryBooks.map(({ category, books, loading }) => (
                             <div key={category} className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-2xl font-semibold">{category}</h2>
-                                    <Link href={`/discover/categories/${encodeURIComponent(category)}`} className="text-blue-600 hover:text-blue-800">
+                                    <Link href={`/discover/categories/${encodeURIComponent(category)}`} className="text-blue-500 hover:text-blue-800">
                                         See all
                                     </Link>
-
-                                    
                                 </div>
                                 {loading ? (
                                     <div className="flex items-center justify-center h-64">
-                                        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                                     </div>
                                 ) : books.length > 0 ? (
                                     <div className="">
