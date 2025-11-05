@@ -95,7 +95,7 @@ const CategoryPage = () => {
                                 <div className="p-4">
                                     <h2 className="font-medium text-white text-lg line-clamp-2">{book.title}</h2>
                                     {book.authors?.[0] && (
-                                        <p className="text-gray-600 text-sm mt-1">
+                                        <p className="text-gray-500 text-sm mt-1">
                                             {typeof book.authors[0] === "string"
                                                 ? book.authors[0]
                                                 : book.authors[0].name}
@@ -109,7 +109,7 @@ const CategoryPage = () => {
 
                 {loading && (
                     <div className="flex items-center justify-center h-32">
-                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 )}
 
@@ -125,7 +125,7 @@ const CategoryPage = () => {
                 )}
 
                 {!loading && books.length === 0 && (
-                    <div className="text-center text-gray-600 py-12">
+                    <div className="text-center text-gray-500 py-12">
                         No books found in this category.
                     </div>
                 )}

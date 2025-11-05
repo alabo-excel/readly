@@ -162,7 +162,7 @@ const BookReader = () => {
                 <div className="h-screen flex items-center justify-center">
                     <div className="text-center">
                         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading book...</p>
+                        <p className="text-gray-500">Loading book...</p>
                     </div>
                 </div>
             </DashboardLayout>
@@ -188,10 +188,10 @@ const BookReader = () => {
     }
 
     return (
-        <div className="h-screen bg-gray-900 text-white flex flex-col">
+        <div className="h-screen text-white flex flex-col">
             {/* Top Menu */}
             {showMenu && (
-                <div className="bg-gray-800 border-b border-gray-700 p-4">
+                <div className="bg-black border-b border-gray-700 p-4">
                     <div className="max-w-4xl mx-auto">
                         <div className="flex items-center justify-between mb-4">
                             <div>
@@ -253,7 +253,7 @@ const BookReader = () => {
                 <div className="max-w-3xl mx-auto">
                     <div
                         style={{ fontSize: `${fontSize}px`, lineHeight: '1.8' }}
-                        className="text-gray-100 whitespace-pre-wrap leading-relaxed"
+                        className="text-gray-100 whitespace-pre-wrap whitespace-pre-wrap whitespace-pre-wrap leading-relaxed"
                     >
                         {getCurrentPageContent()}
                     </div>
@@ -261,7 +261,7 @@ const BookReader = () => {
             </div>
 
             {/* Bottom Navigation */}
-            <div className={`${showMenu ? 'bg-gray-800' : 'bg-gray-900 hover:bg-gray-800'} border-t border-gray-700 transition-colors`}>
+            <div className={`${showMenu ? 'bg-black' : 'bg-black hover:bg-gray-800'} border-t border-gray-700 transition-colors`}>
                 <div className="max-w-4xl mx-auto px-8 py-4 flex items-center justify-between">
                     <button
                         onClick={goToPreviousPage}

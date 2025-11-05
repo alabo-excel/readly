@@ -88,7 +88,7 @@ const Library = () => {
                 <div className="min-h-screen flex items-center justify-center">
                     <div className="text-center">
                         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading...</p>
+                        <p className="text-gray-500">Loading...</p>
                     </div>
                 </div>
             </DashboardLayout>
@@ -100,16 +100,16 @@ const Library = () => {
             <div className="p-8">
                 <div className="mb-8">
                     <h1 className="text-3xl font-semibold mb-2">📚 My Library</h1>
-                    <p className="text-gray-600">{books.length} {books.length === 1 ? 'book' : 'books'} in your library</p>
+                    <p className="text-gray-500">{books.length} {books.length === 1 ? 'book' : 'books'} in your library</p>
                 </div>
 
                 {books.length === 0 ? (
-                    <div className="bg-gray-50 rounded-xl p-12 text-center">
-                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="bg-black rounded-xl p-12 text-center">
+                        <svg className="w-16 h-16 mx-auto text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C6.228 6.253 2 10.541 2 15.75c0 5.209 4.228 9.497 10 9.497s10-4.288 10-9.497c0-5.209-4.228-9.497-10-9.497z" />
                         </svg>
                         <h2 className="text-2xl font-semibold text-gray-700 mb-2">Your library is empty</h2>
-                        <p className="text-gray-600 mb-6">Start adding books from the Discover section to build your library.</p>
+                        <p className="text-gray-500 mb-6">Start adding books from the Discover section to build your library.</p>
                         <Link
                             href="/discover"
                             className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition"

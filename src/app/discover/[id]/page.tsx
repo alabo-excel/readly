@@ -117,7 +117,7 @@ export default function BookPage() {
         return <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading...</p>
+                <p className="text-gray-500">Loading...</p>
             </div>
         </div>;
 
@@ -143,12 +143,12 @@ export default function BookPage() {
                     <div className="mt-4">
                         <h1 className="text-3xl font-bold mb-2">{book.title}</h1>
                         {book.authors?.[0] && (
-                            <p className="text-gray-600 mb-4">
+                            <p className="text-gray-500 mb-4">
                                 by {book.authors[0].name}
                             </p>
                         )}
                         {book.subjects && (
-                            <p className="text-gray-700 italic mb-4">
+                            <p className="text-gray-500 italic mb-4">
                                 {book.subjects.join(", ")}
                             </p>
                         )}
@@ -185,7 +185,7 @@ export default function BookPage() {
 
                     <div className="mt-6">
                         <h2 className="text-2xl font-semibold mb-4">Summary</h2>
-                        <div className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                        <div className="text-gray-500 whitespace-pre-wrap leading-relaxed">
                             {book.summaries
                                 ? book.summaries[0]
                                 : "No summary available for this book."}

@@ -222,7 +222,7 @@ export default function Books() {
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
                             <h2 className="text-2xl font-bold mb-4">Welcome to Readly!</h2>
-                            <p className="text-gray-600 dark:text-gray-300 mb-6">
+                            <p className="text-gray-500 dark:text-gray-300 mb-6">
                                 Select your favorite categories to get personalized book recommendations.
                             </p>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
@@ -294,7 +294,7 @@ export default function Books() {
 
                 {loading ? (
                     <div className="flex items-center justify-center h-64">
-                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : hasSearched ? (
                     // Show search results
@@ -321,7 +321,7 @@ export default function Books() {
                                                 <div className="p-4">
                                                     <h2 className="font-medium text-white text-lg line-clamp-2">{book.title}</h2>
                                                     {book.authors?.[0] && (
-                                                        <p className="text-gray-600 text-sm mt-1">
+                                                        <p className="text-gray-500 text-sm mt-1">
                                                             {typeof book.authors[0] === "string"
                                                                 ? book.authors[0]
                                                                 : book.authors[0].name}
@@ -353,7 +353,7 @@ export default function Books() {
                                 )}
                             </div>
                         ) : (
-                            <div className="text-center text-gray-600 py-12">
+                            <div className="text-center text-gray-500 py-12">
                                 <p className="text-lg">No books found matching your search.</p>
                                 <button
                                     onClick={clearSearch}
@@ -409,7 +409,7 @@ export default function Books() {
                                                             <div className="p-4">
                                                                 <h2 className="font-medium text-white text-lg line-clamp-2">{book.title}</h2>
                                                                 {book.authors?.[0] && (
-                                                                    <p className="text-gray-600 text-sm mt-1">
+                                                                    <p className="text-gray-500 text-sm mt-1">
                                                                         {typeof book.authors[0] === "string"
                                                                             ? book.authors[0]
                                                                             : book.authors[0].name}
@@ -423,7 +423,7 @@ export default function Books() {
                                         </Swiper>
                                     </div>
                                 ) : (
-                                    <div className="text-center text-gray-600 py-8">
+                                    <div className="text-center text-gray-500 py-8">
                                         No books found for {category}.
                                     </div>
                                 )}
