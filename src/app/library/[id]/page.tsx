@@ -28,8 +28,95 @@ const BookReader = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [showMenu, setShowMenu] = useState(true);
     const [readingProgress, setReadingProgress] = useState(0);
+    const [pages, setPages] = useState<string[]>([]);
 
-    const CHARS_PER_PAGE = 2000; // Approximate characters per page
+    const CHARS_PER_PAGE = 3500; // Increased characters per page for better reading experience
+
+    // Smart pagination that respects sentence and paragraph boundaries
+    const splitIntoPages = (content: string): string[] => {
+        const pages: string[] = [];
+        let currentPageContent = '';
+
+        // Clean and normalize the content first
+        const cleanContent = content
+            .replace(/\r\n/g, '\n')  // Normalize line endings
+            .replace(/\n{3,}/g, '\n\n')  // Reduce excessive line breaks
+            .trim();
+
+        // Split content into paragraphs
+        const paragraphs = cleanContent.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+
+        for (const paragraph of paragraphs) {
+            const trimmedParagraph = paragraph.trim();
+
+            // Check if adding this paragraph would exceed page limit
+            if (currentPageContent.length + trimmedParagraph.length + 4 > CHARS_PER_PAGE && currentPageContent.length > 0) {
+                // Try to find a good sentence break point
+                const sentences = currentPageContent.split(/(?<=[.!?])\s+/);
+
+                if (sentences.length > 1) {
+                    // Find the best break point (around 75% of page capacity for better flow)
+                    const targetLength = CHARS_PER_PAGE * 0.75;
+                    let bestBreakIndex = 0;
+                    let currentLength = 0;
+
+                    for (let i = 0; i < sentences.length; i++) {
+                        const nextLength = currentLength + sentences[i].length;
+                        if (nextLength >= targetLength) {
+                            bestBreakIndex = i;
+                            break;
+                        }
+                        currentLength = nextLength;
+                        bestBreakIndex = i;
+                    }
+
+                    // Split at the best break point
+                    const pageContent = sentences.slice(0, bestBreakIndex + 1).join(' ').trim();
+                    const remainingContent = sentences.slice(bestBreakIndex + 1).join(' ').trim();
+
+                    if (pageContent) {
+                        pages.push(pageContent);
+                    }
+
+                    currentPageContent = remainingContent;
+                } else {
+                    // No good sentence break, just split at paragraph boundary
+                    pages.push(currentPageContent.trim());
+                    currentPageContent = '';
+                }
+            }
+
+            // Add current paragraph
+            if (currentPageContent.length > 0) {
+                currentPageContent += '\n\n' + trimmedParagraph;
+            } else {
+                currentPageContent = trimmedParagraph;
+            }
+
+            // If single paragraph is too long, split it more carefully
+            if (currentPageContent.length > CHARS_PER_PAGE * 1.1) {
+                const sentences = currentPageContent.split(/(?<=[.!?])\s+/);
+                let tempPage = '';
+
+                for (const sentence of sentences) {
+                    if (tempPage.length + sentence.length + 1 > CHARS_PER_PAGE && tempPage.length > 0) {
+                        pages.push(tempPage.trim());
+                        tempPage = sentence;
+                    } else {
+                        tempPage += (tempPage ? ' ' : '') + sentence;
+                    }
+                }
+                currentPageContent = tempPage;
+            }
+        }
+
+        // Add the last page if there's content
+        if (currentPageContent.trim()) {
+            pages.push(currentPageContent.trim());
+        }
+
+        return pages.filter(page => page.length > 0);
+    };
 
     useEffect(() => {
         loadBook();
@@ -103,19 +190,25 @@ const BookReader = () => {
             if (text) {
                 setBookContent(text);
 
-                // Calculate total pages
-                const pages = Math.ceil(text.length / CHARS_PER_PAGE);
-                setTotalPages(pages);
+                // Split content into smart pages
+                const splitPages = splitIntoPages(text);
+                setPages(splitPages);
+                setTotalPages(splitPages.length);
 
                 // Load saved reading progress
                 const progressKey = `reading_progress_${bookId}`;
                 const savedProgress = localStorage.getItem(progressKey);
                 if (savedProgress) {
                     const page = parseInt(savedProgress);
-                    setCurrentPage(Math.min(page, pages - 1));
+                    setCurrentPage(Math.min(page, splitPages.length - 1));
                 } else {
                     setCurrentPage(0);
                 }
+
+                // Calculate initial reading progress
+                const initialProgress = savedProgress ?
+                    ((parseInt(savedProgress) + 1) / splitPages.length) * 100 : 0;
+                setReadingProgress(initialProgress);
             } else {
                 setError("No plain text available for this book.");
             }
@@ -134,11 +227,19 @@ const BookReader = () => {
         setReadingProgress(progress);
     };
 
+    const scrollToTop = () => {
+        const contentArea = document.querySelector('.flex-1.overflow-auto');
+        if (contentArea) {
+            contentArea.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
     const goToNextPage = () => {
         if (currentPage < totalPages - 1) {
             const newPage = currentPage + 1;
             setCurrentPage(newPage);
             saveReadingProgress(newPage);
+            scrollToTop();
         }
     };
 
@@ -147,14 +248,41 @@ const BookReader = () => {
             const newPage = currentPage - 1;
             setCurrentPage(newPage);
             saveReadingProgress(newPage);
+            scrollToTop();
         }
     };
 
-    const getCurrentPageContent = () => {
-        const startChar = currentPage * CHARS_PER_PAGE;
-        const endChar = startChar + CHARS_PER_PAGE;
-        return bookContent.slice(startChar, endChar);
+    const goToPage = (pageNumber: number) => {
+        const targetPage = Math.max(0, Math.min(pageNumber, totalPages - 1));
+        setCurrentPage(targetPage);
+        saveReadingProgress(targetPage);
+        scrollToTop();
     };
+
+    const getCurrentPageContent = () => {
+        return pages[currentPage] || '';
+    };
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                goToPreviousPage();
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                goToNextPage();
+            } else if (e.key === 'Escape') {
+                setShowMenu(!showMenu);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                scrollToTop();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [currentPage, totalPages, showMenu]);
 
     if (loading) {
         return (
@@ -214,9 +342,25 @@ const BookReader = () => {
                                     style={{ width: `${readingProgress}%` }}
                                 ></div>
                             </div>
-                            <p className="text-sm text-gray-400 mt-2">
-                                Page {currentPage + 1} of {totalPages} ({Math.round(readingProgress)}%)
-                            </p>
+                            <div className="flex items-center justify-between mt-2">
+                                <p className="text-sm text-gray-400">
+                                    Page {currentPage + 1} of {totalPages} ({Math.round(readingProgress)}%)
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-400">Go to page:</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={totalPages}
+                                        value={currentPage + 1}
+                                        onChange={(e) => {
+                                            const page = parseInt(e.target.value) - 1;
+                                            if (!isNaN(page)) goToPage(page);
+                                        }}
+                                        className="w-16 px-2 py-1 text-xs bg-gray-700 border border-gray-600 rounded text-center focus:border-blue-500 focus:outline-none"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Controls */}
@@ -249,48 +393,61 @@ const BookReader = () => {
             )}
 
             {/* Book Content Area */}
-            <div className="flex-1 overflow-auto bg-gray-950 p-8">
-                <div className="max-w-3xl mx-auto">
+            <div className="flex-1 overflow-auto bg-gray-950">
+                <div className="max-w-4xl mx-auto px-6 py-8">
                     <div
-                        style={{ fontSize: `${fontSize}px`, lineHeight: '1.8' }}
-                        className="text-gray-100 whitespace-pre-wrap whitespace-pre-wrap whitespace-pre-wrap leading-relaxed"
+                        style={{
+                            fontSize: `${fontSize}px`,
+                            lineHeight: '1.7'
+                        }}
+                        className="text-gray-100"
                     >
-                        {getCurrentPageContent()}
+                        <div className="prose prose-invert max-w-none">
+                            {getCurrentPageContent().split('\n\n').map((paragraph, index) => (
+                                paragraph.trim() ? (
+                                    <p key={index} className="mb-6 text-justify leading-relaxed">
+                                        {paragraph.trim()}
+                                    </p>
+                                ) : null
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Bottom Navigation */}
             <div className={`${showMenu ? 'bg-black' : 'bg-black hover:bg-gray-800'} border-t border-gray-700 transition-colors`}>
-                <div className="max-w-4xl mx-auto px-8 py-4 flex items-center justify-between">
-                    <button
-                        onClick={goToPreviousPage}
-                        disabled={currentPage === 0}
-                        className={`px-6 py-2 rounded-lg transition ${currentPage === 0
-                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                            : 'bg-blue-500 hover:bg-blue-700 text-white'
-                            }`}
-                    >
-                        ←
-                    </button>
+                <div className="max-w-4xl mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <button
+                            onClick={goToPreviousPage}
+                            disabled={currentPage === 0}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${currentPage === 0
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                : 'bg-blue-500 hover:bg-blue-700 text-white'
+                                }`}
+                        >
+                            <span>←</span>
+                            <span className="hidden sm:inline">Previous</span>
+                        </button>
 
-                    {/* <button
-                        onClick={() => setShowMenu(!showMenu)}
-                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
-                    >
-                        {showMenu ? '▼ Hide' : '▲ Show'} Menu
-                    </button> */}
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <span>Use arrow keys to navigate</span>
+                            <span className="hidden md:inline">• ESC to toggle menu • Home to scroll top</span>
+                        </div>
 
-                    <button
-                        onClick={goToNextPage}
-                        disabled={currentPage === totalPages - 1}
-                        className={`px-6 py-2 rounded-lg transition ${currentPage === totalPages - 1
-                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                            : 'bg-blue-500 hover:bg-blue-700 text-white'
-                            }`}
-                    >
-                        →
-                    </button>
+                        <button
+                            onClick={goToNextPage}
+                            disabled={currentPage === totalPages - 1}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${currentPage === totalPages - 1
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                : 'bg-blue-500 hover:bg-blue-700 text-white'
+                                }`}
+                        >
+                            <span className="hidden sm:inline">Next</span>
+                            <span>→</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
