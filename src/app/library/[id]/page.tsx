@@ -259,26 +259,77 @@ const BookReader = () => {
     const goToNextPage = () => {
         if (currentPage < totalPages - 1) {
             const newPage = currentPage + 1;
+            const wasPlaying = isPlaying;
+
+            // Stop current audio if playing
+            if (wasPlaying) {
+                window.speechSynthesis.cancel();
+                setIsPlaying(false);
+                setCurrentUtterance(null);
+                setAudioProgress(0);
+            }
+
             setCurrentPage(newPage);
             saveReadingProgress(newPage);
             scrollToTop();
+
+            // Start audio on new page if it was playing
+            if (wasPlaying) {
+                setTimeout(() => {
+                    startReadingPage(newPage);
+                }, 500);
+            }
         }
     };
 
     const goToPreviousPage = () => {
         if (currentPage > 0) {
             const newPage = currentPage - 1;
+            const wasPlaying = isPlaying;
+
+            // Stop current audio if playing
+            if (wasPlaying) {
+                window.speechSynthesis.cancel();
+                setIsPlaying(false);
+                setCurrentUtterance(null);
+                setAudioProgress(0);
+            }
+
             setCurrentPage(newPage);
             saveReadingProgress(newPage);
             scrollToTop();
+
+            // Start audio on new page if it was playing
+            if (wasPlaying) {
+                setTimeout(() => {
+                    startReadingPage(newPage);
+                }, 500);
+            }
         }
     };
 
     const goToPage = (pageNumber: number) => {
         const targetPage = Math.max(0, Math.min(pageNumber, totalPages - 1));
+        const wasPlaying = isPlaying;
+
+        // Stop current audio if playing
+        if (wasPlaying) {
+            window.speechSynthesis.cancel();
+            setIsPlaying(false);
+            setCurrentUtterance(null);
+            setAudioProgress(0);
+        }
+
         setCurrentPage(targetPage);
         saveReadingProgress(targetPage);
         scrollToTop();
+
+        // Start audio on new page if it was playing
+        if (wasPlaying) {
+            setTimeout(() => {
+                startReadingPage(targetPage);
+            }, 500);
+        }
     };
 
     const getCurrentPageContent = () => {
@@ -481,7 +532,7 @@ const BookReader = () => {
                                 onClick={() => router.push('/library')}
                                 className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
                             >
-                                ← Back
+                                ←
                             </button>
                         </div>
 
@@ -600,18 +651,28 @@ const BookReader = () => {
             )}
 
             {/* Book Content Area */}
-            <div className="flex-1 overflow-auto bg-gray-950">
+            <div className="flex-1 overflow-auto bg-gray-950 pb-20">
                 <div className="max-w-4xl mx-auto px-6 py-8">
-                    {/* Audio Status Indicator */}
-                    {isPlaying && (
-                        <div className="fixed top-4 left-4 bg-green-600 text-white px-3 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
-                            <div className="flex space-x-1">
-                                <div className="w-1 h-4 bg-white animate-pulse"></div>
-                                <div className="w-1 h-4 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                                <div className="w-1 h-4 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-                            </div>
-                            <span className="text-sm">Audio Playing</span>
-                        </div>
+                    {/* Floating Play/Pause Button - Only show when menu is hidden */}
+                    {!showMenu && (
+                        <button
+                            onClick={toggleAudioBook}
+                            className={`fixed top-4 left-4 ${isPlaying
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-green-600 hover:bg-green-700'
+                                } text-white p-3 rounded-full shadow-lg z-50 transition-all duration-200 hover:scale-105 active:scale-95`}
+                            title={isPlaying ? 'Pause Audio' : 'Play Audio'}
+                        >
+                            {isPlaying ? (
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            )}
+                        </button>
                     )}
 
                     <div
@@ -634,8 +695,8 @@ const BookReader = () => {
                 </div>
             </div>
 
-            {/* Bottom Navigation */}
-            <div className={`${showMenu ? 'bg-black' : 'bg-black hover:bg-gray-800'} border-t border-gray-700 transition-colors`}>
+            {/* Bottom Navigation - Fixed */}
+            <div className={`fixed bottom-0 left-0 right-0 ${showMenu ? 'bg-black' : 'bg-black hover:bg-gray-800'} border-t border-gray-700 transition-colors z-40`}>
                 <div className="max-w-4xl mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
                         <button
