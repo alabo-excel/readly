@@ -5,7 +5,9 @@ import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/lib/supabaseClient";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from 'swiper/modules';
 import "swiper/css";
+import "swiper/css/navigation";
 
 interface Author {
     name: string;
@@ -250,8 +252,8 @@ export default function Books() {
                                             key={category}
                                             onClick={() => handleCategoryToggle(category)}
                                             className={`p-2 sm:p-3 rounded-lg text-xs sm:text-sm transition-colors text-left ${selectedCategories.includes(category)
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                                                 }`}
                                         >
                                             <span className="block truncate" title={category}>
@@ -277,8 +279,8 @@ export default function Books() {
                                         onClick={handleSavePreferences}
                                         disabled={selectedCategories.length === 0 || saving}
                                         className={`w-full sm:w-auto px-6 py-2 sm:py-3 rounded-lg transition-colors flex items-center justify-center text-sm sm:text-base ${selectedCategories.length > 0 && !saving
-                                                ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700'
-                                                : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                            ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700'
+                                            : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                                             }`}
                                     >
                                         {saving ? (
@@ -299,33 +301,35 @@ export default function Books() {
                 {/* <h1 className="text-3xl font-semibold mb-6">📚 Discover Books</h1> */}
 
                 {/* 🔍 Search Bar */}
-                <div className="flex gap-2 mb-6">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 mb-6">
                     <input
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch(1)}
                         placeholder="Search for books or authors..."
-                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                     />
-                    <button
-                        onClick={() => handleSearch(1)}
-                        className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-                    >
-                        Search
-                    </button>
-                    {hasSearched && (
+                    <div className="flex gap-2">
                         <button
-                            onClick={clearSearch}
-                            className="px-4 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center gap-2"
-                            title="Clear search"
+                            onClick={() => handleSearch(1)}
+                            className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition text-sm sm:text-base font-medium"
                         >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            Clear
+                            Search
                         </button>
-                    )}
+                        {hasSearched && (
+                            <button
+                                onClick={clearSearch}
+                                className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
+                                title="Clear search"
+                            >
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span className="hidden xs:inline">Clear</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {loading ? (
@@ -416,15 +420,23 @@ export default function Books() {
                                         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                                     </div>
                                 ) : books.length > 0 ? (
-                                    <div className="">
+                                    <div className="relative px-8 sm:px-12 -mx-8 sm:-mx-12">
                                         <Swiper
-                                            spaceBetween={24}
-                                            breakpoints={{
-                                                640: { slidesPerView: 1.5 },
-                                                768: { slidesPerView: 2.5 },
-                                                1024: { slidesPerView: 3.5 }
+                                            spaceBetween={16}
+                                            modules={[Navigation]}
+                                            navigation={{
+                                                nextEl: `.swiper-button-next-${category.replace(/\s+/g, '-')}`,
+                                                prevEl: `.swiper-button-prev-${category.replace(/\s+/g, '-')}`,
                                             }}
-                                            className="!-mx-4 !px-4"
+                                            breakpoints={{
+                                                320: { slidesPerView: 1.5, spaceBetween: 12 },
+                                                480: { slidesPerView: 2.2, spaceBetween: 16 },
+                                                640: { slidesPerView: 2.5, spaceBetween: 20 },
+                                                768: { slidesPerView: 3.2, spaceBetween: 24 },
+                                                1024: { slidesPerView: 4.2, spaceBetween: 24 },
+                                                1280: { slidesPerView: 5.2, spaceBetween: 24 }
+                                            }}
+                                            className="!overflow-hidden"
                                         >
                                             {books.map((book) => (
                                                 <SwiperSlide key={book.id}>
@@ -437,15 +449,15 @@ export default function Books() {
                                                                         : "https://via.placeholder.com/150x220?text=No+Cover"
                                                                 }
                                                                 alt={book.title}
-                                                                className="w-full h-80 object-cover"
+                                                                className="w-full h-64 sm:h-72 md:h-80 object-cover"
                                                                 onError={(e) => {
                                                                     e.currentTarget.src = "https://via.placeholder.com/150x220?text=No+Cover";
                                                                 }}
                                                             />
-                                                            <div className="p-4">
-                                                                <h2 className="font-medium text-white text-lg line-clamp-2">{book.title}</h2>
+                                                            <div className="p-3 sm:p-4">
+                                                                <h2 className="font-medium text-white text-sm sm:text-lg line-clamp-2">{book.title}</h2>
                                                                 {book.authors?.[0] && (
-                                                                    <p className="text-gray-500 text-sm mt-1">
+                                                                    <p className="text-gray-500 text-xs sm:text-sm mt-1">
                                                                         {typeof book.authors[0] === "string"
                                                                             ? book.authors[0]
                                                                             : book.authors[0].name}
@@ -457,6 +469,24 @@ export default function Books() {
                                                 </SwiperSlide>
                                             ))}
                                         </Swiper>
+
+                                        {/* Navigation Arrows */}
+                                        <button
+                                            className={`swiper-button-prev-${category.replace(/\s+/g, '-')} absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 hover:bg-black/95 text-white rounded-full p-2 sm:p-3 transition-all duration-300 shadow-xl border border-white/20`}
+                                            aria-label="Previous books"
+                                        >
+                                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            className={`swiper-button-next-${category.replace(/\s+/g, '-')} absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/80 hover:bg-black/95 text-white rounded-full p-2 sm:p-3 transition-all duration-300 shadow-xl border border-white/20`}
+                                            aria-label="Next books"
+                                        >
+                                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 ) : (
                                     <div className="text-center text-gray-500 py-8">
