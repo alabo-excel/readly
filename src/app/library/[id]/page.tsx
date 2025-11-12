@@ -3,6 +3,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useSettings } from '@/hooks/useSettings';
 import axios from 'axios';
 
 interface LibraryBook {
@@ -18,17 +19,24 @@ const BookReader = () => {
     const params = useParams();
     const router = useRouter();
     const bookId = params.id as string;
+    const { settings, loading: settingsLoading } = useSettings();
 
     const [book, setBook] = useState<LibraryBook | null>(null);
     const [bookContent, setBookContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [fontSize, setFontSize] = useState(16);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [showMenu, setShowMenu] = useState(true);
     const [readingProgress, setReadingProgress] = useState(0);
     const [pages, setPages] = useState<string[]>([]);
+
+    // Audio book states
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+    const [audioProgress, setAudioProgress] = useState(0);
+    const [audioPage, setAudioPage] = useState(0); // Track which page audio is playing
 
     const CHARS_PER_PAGE = 3500; // Increased characters per page for better reading experience
 
@@ -120,7 +128,21 @@ const BookReader = () => {
 
     useEffect(() => {
         loadBook();
+        initializeVoices();
     }, [bookId]);
+
+    const initializeVoices = () => {
+        const loadVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            setAvailableVoices(voices);
+        };
+
+        // Load voices immediately if available
+        loadVoices();
+
+        // Also load when voices change (some browsers load async)
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    };
 
     const loadBook = async () => {
         try {
@@ -263,6 +285,120 @@ const BookReader = () => {
         return pages[currentPage] || '';
     };
 
+    // Audio book functions
+    const startReadingPage = (pageIndex: number) => {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+        }
+
+        const textToRead = pages[pageIndex] || '';
+
+        if (!textToRead) {
+            console.warn('No content to read on page', pageIndex);
+            return;
+        }
+
+        console.log('Starting to read page:', pageIndex, 'Text preview:', textToRead.substring(0, 100) + '...');
+
+        // Update audio page tracker
+        setAudioPage(pageIndex);
+
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+
+        utterance.rate = settings.speechRate;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        const selectedVoice = availableVoices.find(v => v.name === settings.speechVoiceName);
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+        }
+
+        // Handle events
+        utterance.onstart = () => {
+            setIsPlaying(true);
+            setCurrentUtterance(utterance);
+            console.log('Audio started for page:', pageIndex);
+        };
+
+        utterance.onend = () => {
+            setIsPlaying(false);
+            setCurrentUtterance(null);
+            setAudioProgress(0);
+            console.log('Audio ended for page:', pageIndex);
+
+            // Auto-advance to next page if enabled and not on last page
+            if (settings.autoAdvanceAudio && pageIndex < totalPages - 1) {
+                const nextPageIndex = pageIndex + 1;
+                console.log('Auto-advancing from page', pageIndex, 'to page', nextPageIndex);
+
+                setTimeout(() => {
+                    // Update the page state first
+                    setCurrentPage(nextPageIndex);
+                    saveReadingProgress(nextPageIndex);
+                    scrollToTop();
+
+                    // Then start reading the next page
+                    setTimeout(() => {
+                        console.log('About to start reading next page:', nextPageIndex);
+                        startReadingPage(nextPageIndex);
+                    }, 800);
+                }, 1000);
+            }
+        };
+
+        utterance.onerror = (event) => {
+            console.error('Speech synthesis error:', event);
+            setIsPlaying(false);
+            setCurrentUtterance(null);
+            setAudioProgress(0);
+        };
+
+        utterance.onboundary = (event) => {
+            // Update progress based on character position
+            const progress = (event.charIndex / textToRead.length) * 100;
+            setAudioProgress(progress);
+        };
+
+        window.speechSynthesis.speak(utterance);
+    };
+
+    const startReading = () => {
+        console.log('startReading called for current page:', currentPage);
+        startReadingPage(currentPage);
+    };
+
+    const pauseReading = () => {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            setIsPlaying(false);
+        }
+    };
+
+    const resumeReading = () => {
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+            setIsPlaying(true);
+        }
+    };
+
+    const stopReading = () => {
+        window.speechSynthesis.cancel();
+        setIsPlaying(false);
+        setCurrentUtterance(null);
+        setAudioProgress(0);
+    };
+
+    const toggleAudioBook = () => {
+        if (isPlaying) {
+            pauseReading();
+        } else if (window.speechSynthesis.paused) {
+            resumeReading();
+        } else {
+            startReading();
+        }
+    };
+
     // Keyboard navigation
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
@@ -277,12 +413,27 @@ const BookReader = () => {
             } else if (e.key === 'Home') {
                 e.preventDefault();
                 scrollToTop();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                toggleAudioBook();
+            } else if (e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                stopReading();
             }
         };
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentPage, totalPages, showMenu]);
+    }, [currentPage, totalPages, showMenu, isPlaying]);
+
+    // Cleanup audio on component unmount
+    useEffect(() => {
+        return () => {
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
 
     if (loading) {
         return (
@@ -364,30 +515,86 @@ const BookReader = () => {
                         </div>
 
                         {/* Controls */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm text-gray-400">Font Size:</span>
+                        <div className="">
+                            {/* <div className="flex items-center gap-4 text-gray-400">
+                                <span>Font Size: {settings.fontSize}px</span>
+                                <span>•</span>
+                                <span>Audio Rate: {settings.speechRate.toFixed(1)}x</span>
+                            </div> */}
+
+                            <div className="flex items-center justify-between gap-2">
+                                {/* Audio Book Controls */}
                                 <button
-                                    onClick={() => setFontSize(Math.max(12, fontSize - 2))}
-                                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded transition text-sm"
+                                    onClick={toggleAudioBook}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${isPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
+                                        } text-white`}
+                                    title={isPlaying ? 'Pause Audio' : 'Start Audio'}
                                 >
-                                    A−
+                                    {isPlaying ? (
+                                        <>
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                                            </svg>
+                                            <span className="hidden sm:inline">Pause</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M8 5v14l11-7z" />
+                                            </svg>
+                                            <span className="hidden sm:inline">Play Audio</span>
+                                        </>
+                                    )}
                                 </button>
-                                <span className="w-8 text-center text-sm">{fontSize}px</span>
+
+                                {(isPlaying || window.speechSynthesis.paused) && (
+                                    <button
+                                        onClick={stopReading}
+                                        className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition text-white"
+                                        title="Stop Audio"
+                                    >
+                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M6 6h12v12H6z" />
+                                        </svg>
+                                    </button>
+                                )}
+
                                 <button
-                                    onClick={() => setFontSize(Math.min(24, fontSize + 2))}
-                                    className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded transition text-sm"
+                                    onClick={() => router.push('/settings')}
+                                    className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition text-white"
+                                    title="Settings"
                                 >
-                                    A+
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                                    </svg>
+                                </button>
+
+                                <button
+                                    onClick={() => setShowMenu(false)}
+                                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
+                                >
+                                    Hide Menu
                                 </button>
                             </div>
-                            <button
-                                onClick={() => setShowMenu(false)}
-                                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
-                            >
-                                Hide Menu
-                            </button>
                         </div>
+
+                        {/* Audio Progress */}
+                        {isPlaying && (
+                            <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-600">
+                                <div className="flex items-center justify-between text-white mb-2">
+                                    <span className="text-sm">
+                                        Audio Progress: {Math.round(audioProgress)}% (Page {audioPage + 1})
+                                    </span>
+                                    <span className="text-sm">Voice: {settings.speechVoiceName || 'Default'}</span>
+                                </div>
+                                <div className="w-full bg-gray-700 rounded-full h-2">
+                                    <div
+                                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                        style={{ width: `${audioProgress}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -395,9 +602,21 @@ const BookReader = () => {
             {/* Book Content Area */}
             <div className="flex-1 overflow-auto bg-gray-950">
                 <div className="max-w-4xl mx-auto px-6 py-8">
+                    {/* Audio Status Indicator */}
+                    {isPlaying && (
+                        <div className="fixed top-4 left-4 bg-green-600 text-white px-3 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
+                            <div className="flex space-x-1">
+                                <div className="w-1 h-4 bg-white animate-pulse"></div>
+                                <div className="w-1 h-4 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                                <div className="w-1 h-4 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                            </div>
+                            <span className="text-sm">Audio Playing</span>
+                        </div>
+                    )}
+
                     <div
                         style={{
-                            fontSize: `${fontSize}px`,
+                            fontSize: `${settings.fontSize}px`,
                             lineHeight: '1.7'
                         }}
                         className="text-gray-100"
@@ -432,8 +651,9 @@ const BookReader = () => {
                         </button>
 
                         <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <span>Use arrow keys to navigate</span>
-                            <span className="hidden md:inline">• ESC to toggle menu • Home to scroll top</span>
+                            <span>Arrow keys: navigate</span>
+                            <span className="hidden md:inline">• Space: play/pause audio • S: stop audio</span>
+                            <span className="hidden lg:inline">• ESC: toggle menu</span>
                         </div>
 
                         <button
